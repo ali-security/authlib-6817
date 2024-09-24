@@ -5,6 +5,14 @@ from authlib.common.encoding import (
 from authlib.common.security import generate_token
 from authlib.jose.rfc7517 import Key
 
+POSSIBLE_UNSAFE_KEYS = (
+    b"-----BEGIN ",
+    b"---- BEGIN ",
+    b"ssh-rsa ",
+    b"ssh-dss ",
+    b"ssh-ed25519 ",
+    b"ecdsa-sha2-",
+)
 
 class OctKey(Key):
     """Key class of the ``oct`` key type."""
@@ -25,6 +33,8 @@ class OctKey(Key):
             raw_key = urlsafe_b64decode(to_bytes(payload['k']))
         else:
             raw_key = to_bytes(raw)
+            if raw_key.startswith(POSSIBLE_UNSAFE_KEYS):
+                raise ValueError("This key may not be safe to import")
             k = to_unicode(urlsafe_b64encode(raw_key))
             payload = {'k': k}
 
